@@ -1,4 +1,12 @@
 (() => {
+  const setViewportHeight = () => {
+    const vh = window.innerHeight * 0.01;
+    document.documentElement.style.setProperty("--vh", `${vh}px`);
+  };
+
+  setViewportHeight();
+  window.addEventListener("resize", setViewportHeight);
+
   const video = document.getElementById("video");
   const canvas = document.getElementById("overlay");
   const ctx = canvas.getContext("2d");
