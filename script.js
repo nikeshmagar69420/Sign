@@ -274,6 +274,22 @@
     }));
 
     if (handLandmarks.length) {
+      handLandmarks.forEach((lm) => {
+        if (window.drawConnectors && window.HAND_CONNECTIONS) {
+          drawConnectors(ctx, lm, HAND_CONNECTIONS, {
+            color: "rgba(255,255,255,0.75)",
+            lineWidth: 1.5,
+          });
+        }
+        if (window.drawLandmarks) {
+          drawLandmarks(ctx, lm, {
+            color: "rgba(143, 227, 216, 0.9)",
+            lineWidth: 1,
+            radius: 2,
+          });
+        }
+      });
+
       matched = recognizedHands[0]?.gesture || null;
       setStatus("Hands detected — reading the shape.", "live");
     } else {
