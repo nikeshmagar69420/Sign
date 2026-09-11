@@ -136,7 +136,11 @@
   };
 
   const getFingerState = (lm) => {
-    const wrist = lm[0];
+    const palm = {
+      x: (lm[0].x + lm[5].x + lm[9].x + lm[13].x + lm[17].x) / 5,
+      y: (lm[0].y + lm[5].y + lm[9].y + lm[13].y + lm[17].y) / 5,
+    };
+
     const pairs = {
       thumb: [4, 3],
       index: [8, 6],
@@ -144,18 +148,34 @@
       ring: [16, 14],
       pinky: [20, 18],
     };
+
     const state = {};
     for (const finger in pairs) {
       const [tipIdx, pipIdx] = pairs[finger];
-      state[finger] = dist(wrist, lm[tipIdx]) > dist(wrist, lm[pipIdx]) * 1.02;
+      const tipDist = dist(lm[tipIdx], palm);
+      const pipDist = dist(lm[pipIdx], palm);
+      state[finger] = tipDist > pipDist * 1.12;
     }
     return state;
   };
 
   const classify = (lm) => {
     const f = getFingerState(lm);
+
+    const pointLike =
+      f.index &&
+      !f.thumb &&
+      !f.middle &&
+      !f.ring &&
+      !f.pinky &&
+      dist(lm[8], lm[5]) > dist(lm[6], lm[5]) * 0.7;
+
+    if (pointLike) {
+      return GESTURES.find((g) => g.key === "point") || null;
+    }
+
     for (const g of GESTURES) {
-      if (g.test(f)) return g;
+      if (g.key !== "point" && g.test(f)) return g;
     }
     return null;
   };
