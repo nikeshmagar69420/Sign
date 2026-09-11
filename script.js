@@ -14,6 +14,7 @@
 
   let speakingEnabled = true;
   let specialTriggered = false;
+  let specialHoldFrames = 0;
   const SPECIAL_TRIGGER_TEXT = "miku miku " + "b".repeat(120);
 
   const GESTURES = [
@@ -164,13 +165,13 @@
     };
   };
 
-  const detectTwoHandPeaceMiku = (handLandmarks) => {
-    if (!handLandmarks || handLandmarks.length < 2) return false;
+  const detectTwoHandPeaceMiku = (recognizedHands) => {
+    if (!recognizedHands || recognizedHands.length < 2) return false;
 
-    const peaceHands = handLandmarks
-      .map((lm) => ({
+    const peaceHands = recognizedHands
+      .map(({ lm, gesture }) => ({
         center: getHandCenter(lm),
-        gesture: classify(lm),
+        gesture,
       }))
       .filter((item) => item.gesture && item.gesture.key === "hi");
 
@@ -192,13 +193,17 @@
     if (!leftHand || !rightHand) return false;
 
     const leftNearEye =
-      Math.abs(leftHand.center.x * width - leftEye.x) < width * 0.18 &&
-      Math.abs(leftHand.center.y * height - leftEye.y) < height * 0.2;
+      Math.abs(leftHand.center.x * width - leftEye.x) < width * 0.32 &&
+      Math.abs(leftHand.center.y * height - leftEye.y) < height * 0.35;
     const rightNearEye =
-      Math.abs(rightHand.center.x * width - rightEye.x) < width * 0.18 &&
-      Math.abs(rightHand.center.y * height - rightEye.y) < height * 0.2;
+      Math.abs(rightHand.center.x * width - rightEye.x) < width * 0.32 &&
+      Math.abs(rightHand.center.y * height - rightEye.y) < height * 0.35;
 
-    return leftNearEye && rightNearEye;
+    const leftRightSpread =
+      Math.abs(leftHand.center.x - rightHand.center.x) > 0.1;
+    const bothOnScreen = leftHand.center.x < 0.8 && rightHand.center.x > 0.2;
+
+    return (leftNearEye && rightNearEye) || (leftRightSpread && bothOnScreen);
   };
 
   const STABLE_FRAMES = 7;
@@ -259,6 +264,10 @@
 
     let matched = null;
     const handLandmarks = results.multiHandLandmarks || [];
+    const recognizedHands = handLandmarks.map((lm) => ({
+      lm,
+      gesture: classify(lm),
+    }));
 
     if (handLandmarks.length) {
       handLandmarks.forEach((lm) => {
@@ -272,18 +281,25 @@
           drawLandmarks(ctx, lm, { color: "#e8a33d", lineWidth: 1, radius: 3 });
         }
       });
-      matched = classify(handLandmarks[0]);
+
+      matched = recognizedHands[0]?.gesture || null;
       setStatus("Hands detected — reading the shape.", "live");
     } else {
       setStatus("Camera live — show a hand.", "warn");
     }
 
-    const twoHandMiku = detectTwoHandPeaceMiku(handLandmarks);
+    const twoHandMiku = detectTwoHandPeaceMiku(recognizedHands);
     if (twoHandMiku) {
+      specialHoldFrames += 1;
+    } else {
+      specialHoldFrames = 0;
+    }
+
+    if (twoHandMiku && specialHoldFrames >= 3) {
       detectedWord.textContent = "Miku miku beeeee!";
       detectedWord.className = "detected-word active";
       highlightCard("hi");
-      setStatus("Two-hand peace near both eyes!", "live");
+      setStatus("Two-hand peace trigger!", "live");
 
       if (!specialTriggered) {
         specialTriggered = true;
@@ -293,7 +309,11 @@
       return;
     }
 
-    specialTriggered = false;
+    if (!twoHandMiku) {
+      specialTriggered = false;
+      specialHoldFrames = 0;
+    }
+
     ctx.restore();
     onGestureFrame(matched);
   });
