@@ -163,8 +163,54 @@
     return state;
   };
 
+  const getHandCenter = (lm) => {
+    const xs = lm.map((point) => point.x);
+    const ys = lm.map((point) => point.y);
+    return {
+      x: xs.reduce((sum, value) => sum + value, 0) / xs.length,
+      y: ys.reduce((sum, value) => sum + value, 0) / ys.length,
+    };
+  };
+
+  const isGreetingHand = (lm) => {
+    const center = getHandCenter(lm);
+    const palm = {
+      x: (lm[0].x + lm[5].x + lm[9].x + lm[13].x + lm[17].x) / 5,
+      y: (lm[0].y + lm[5].y + lm[9].y + lm[13].y + lm[17].y) / 5,
+    };
+
+    const fingerTips = [4, 8, 12, 16, 20];
+    const tipSpread = fingerTips.reduce((max, idx) => {
+      return Math.max(max, dist(lm[idx], palm));
+    }, 0);
+
+    const fingerCluster = fingerTips.every((idx) => dist(lm[idx], palm) < 0.14);
+    const fingerPairsClose =
+      dist(lm[8], lm[12]) < 0.12 &&
+      dist(lm[12], lm[16]) < 0.12 &&
+      dist(lm[16], lm[20]) < 0.12 &&
+      dist(lm[4], lm[8]) < 0.18;
+
+    const wristNearCenter = dist(lm[0], center) < 0.2;
+
+    const nearFace =
+      center.y < 0.55 && center.y > 0.18 && center.x > 0.18 && center.x < 0.82;
+
+    return (
+      tipSpread < 0.2 &&
+      fingerCluster &&
+      fingerPairsClose &&
+      wristNearCenter &&
+      nearFace
+    );
+  };
+
   const classify = (lm) => {
     const f = getFingerState(lm);
+
+    if (isGreetingHand(lm)) {
+      return GESTURES.find((g) => g.key === "hello") || null;
+    }
 
     const pointLike =
       f.index &&
@@ -182,15 +228,6 @@
       if (g.key !== "point" && g.test(f)) return g;
     }
     return null;
-  };
-
-  const getHandCenter = (lm) => {
-    const xs = lm.map((point) => point.x);
-    const ys = lm.map((point) => point.y);
-    return {
-      x: xs.reduce((sum, value) => sum + value, 0) / xs.length,
-      y: ys.reduce((sum, value) => sum + value, 0) / ys.length,
-    };
   };
 
   const detectTwoHandPeaceMiku = (recognizedHands) => {
@@ -234,7 +271,7 @@
     return (leftNearEye && rightNearEye) || (leftRightSpread && bothOnScreen);
   };
 
-  const STABLE_FRAMES = 7;
+  const STABLE_FRAMES = 4;
   let candidateKey = null;
   let candidateCount = 0;
   let lastSpokenKey = null;
