@@ -96,19 +96,27 @@
 
   const playSpecialSound = () => {
     if (triggerAudio) {
-      try {
-        triggerAudio.currentTime = 0;
-        const played = triggerAudio.play();
-        if (played && typeof played.catch === "function") {
-          played.catch(() => {
+      triggerAudio.muted = false;
+      triggerAudio.volume = 1;
+      triggerAudio.currentTime = 0;
+      const playPromise = triggerAudio.play();
+
+      if (playPromise && typeof playPromise.catch === "function") {
+        playPromise
+          .then(() => {
+            return;
+          })
+          .catch(() => {
             speak(SPECIAL_TRIGGER_TEXT);
           });
-        }
         return;
-      } catch (err) {
-        // fall through to speech if audio is blocked
+      }
+
+      if (!triggerAudio.paused) {
+        return;
       }
     }
+
     speak(SPECIAL_TRIGGER_TEXT);
   };
 
