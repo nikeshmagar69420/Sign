@@ -24,6 +24,22 @@
   let specialHoldFrames = 0;
   const SPECIAL_TRIGGER_TEXT = "miku miku " + "b".repeat(120);
 
+  const playAudioFromFile = (fileName) => {
+    if (!triggerAudio) return;
+
+    triggerAudio.src = fileName;
+    triggerAudio.muted = false;
+    triggerAudio.volume = 1;
+    triggerAudio.currentTime = 0;
+
+    const playPromise = triggerAudio.play();
+    if (playPromise && typeof playPromise.catch === "function") {
+      playPromise.catch(() => {
+        speak(SPECIAL_TRIGGER_TEXT);
+      });
+    }
+  };
+
   const GESTURES = [
     {
       key: "hello",
@@ -91,29 +107,17 @@
   };
 
   const playSpecialSound = () => {
-    if (triggerAudio) {
-      triggerAudio.muted = false;
-      triggerAudio.volume = 1;
-      triggerAudio.currentTime = 0;
-      const playPromise = triggerAudio.play();
-
-      if (playPromise && typeof playPromise.catch === "function") {
-        playPromise
-          .then(() => {
-            return;
-          })
-          .catch(() => {
-            speak(SPECIAL_TRIGGER_TEXT);
-          });
-        return;
-      }
-
-      if (!triggerAudio.paused) {
-        return;
-      }
+    playAudioFromFile("miku.mp3");
+    if (!triggerAudio || triggerAudio.paused) {
+      speak(SPECIAL_TRIGGER_TEXT);
     }
+  };
 
-    speak(SPECIAL_TRIGGER_TEXT);
+  const playGreetingSound = () => {
+    playAudioFromFile("muslim.mp3");
+    if (!triggerAudio || triggerAudio.paused) {
+      speak("Assalamu alaikum");
+    }
   };
 
   const setStatus = (text, mode) => {
@@ -259,6 +263,13 @@
 
     if (candidateCount === STABLE_FRAMES && key !== lastSpokenKey) {
       lastSpokenKey = key;
+
+      if (key === "hello") {
+        detectedWord.textContent = "Assalamu alaikum";
+        playGreetingSound();
+        return;
+      }
+
       const phrase = matchedGesture.phrase();
       detectedWord.textContent = phrase;
       speak(phrase);
