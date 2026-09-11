@@ -59,10 +59,13 @@ body {
 }
 .cam-box video {
   opacity: 1;
+  z-index: 0;
 }
 .cam-box canvas {
-  opacity: 0.9;
+  opacity: 1;
   pointer-events: none;
+  z-index: 2;
+  background: transparent;
 }
 .cam-placeholder {
   position: absolute;
