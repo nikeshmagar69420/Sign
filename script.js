@@ -7,7 +7,6 @@
   const statusDot = document.getElementById("statusDot");
   const statusText = document.getElementById("statusText");
   const detectedWord = document.getElementById("detectedWord");
-  const muteBtn = document.getElementById("muteBtn");
   const nameInput = document.getElementById("nameInput");
   const cardList = document.getElementById("cardList");
   const triggerAudio = document.getElementById("triggerAudio");
@@ -72,17 +71,6 @@
     const el = document.getElementById("phrase-point");
     if (el) {
       el.textContent = `${GESTURES.find((g) => g.key === "point").phrase()}`;
-    }
-  });
-
-  muteBtn.addEventListener("click", () => {
-    speakingEnabled = !speakingEnabled;
-    muteBtn.textContent = speakingEnabled
-      ? "🔊 Speaking on"
-      : "🔇 Speaking off";
-    muteBtn.classList.toggle("active", speakingEnabled);
-    if (!speakingEnabled && window.speechSynthesis) {
-      window.speechSynthesis.cancel();
     }
   });
 
