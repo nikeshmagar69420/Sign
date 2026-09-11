@@ -1,65 +1,83 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SignSpeak — hand gestures, out loud</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
-</head>
-<body>
-<div class="wrap">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SignSpeak — hand gestures, out loud</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <h1>Sign<span>Speak</span></h1>
+        <p>
+          Show a hand sign to the camera — it reads the shape and says the
+          phrase out loud.
+        </p>
+      </header>
 
-  <header>
-    <h1>Sign<span>Speak</span></h1>
-    <p>Show a hand sign to the camera — it reads the shape and says the phrase out loud.</p>
-  </header>
+      <div class="grid">
+        <div>
+          <div class="stage">
+            <div class="cam-box" id="camBox">
+              <video id="video" playsinline autoplay muted></video>
+              <canvas id="overlay"></canvas>
+              <div class="cam-placeholder" id="placeholder">
+                <div class="big">🖐️</div>
+                <div id="placeholderText">Starting camera…</div>
+              </div>
+            </div>
+            <div class="status-bar">
+              <span class="dot" id="statusDot"></span>
+              <span id="statusText">Waiting for camera access.</span>
+            </div>
+          </div>
 
-  <div class="grid">
-    <div>
-      <div class="stage">
-        <div class="cam-box" id="camBox">
-          <video id="video" playsinline autoplay muted></video>
-          <canvas id="overlay"></canvas>
-          <div class="cam-placeholder" id="placeholder">
-            <div class="big">🖐️</div>
-            <div id="placeholderText">Starting camera…</div>
+          <div class="detected-panel">
+            <p class="detected-label">DETECTED</p>
+            <div class="detected-word idle" id="detectedWord">
+              Show a sign to begin
+            </div>
+            <div class="controls">
+              <button class="pill active" id="muteBtn">🔊 Speaking on</button>
+            </div>
           </div>
         </div>
-        <div class="status-bar">
-          <span class="dot" id="statusDot"></span>
-          <span id="statusText">Waiting for camera access.</span>
+
+        <div class="side">
+          <div class="name-field">
+            <label for="nameInput"
+              >Your name (used for the pointing sign)</label
+            >
+            <input id="nameInput" type="text" value="Nikesh" maxlength="24" />
+          </div>
+
+          <h2>Signs it knows</h2>
+          <div class="cards" id="cardList"></div>
         </div>
       </div>
 
-      <div class="detected-panel">
-        <p class="detected-label">DETECTED</p>
-        <div class="detected-word idle" id="detectedWord">Show a sign to begin</div>
-        <div class="controls">
-          <button class="pill active" id="muteBtn">🔊 Speaking on</button>
-        </div>
-      </div>
+      <footer>
+        Runs entirely in your browser — video never leaves your device. Works
+        best in good light, one hand, palm facing the camera.
+      </footer>
     </div>
 
-    <div class="side">
-      <div class="name-field">
-        <label for="nameInput">Your name (used for the pointing sign)</label>
-        <input id="nameInput" type="text" value="Nikesh" maxlength="24">
-      </div>
+    <audio id="triggerAudio" preload="auto" src="miku.mp3"></audio>
 
-      <h2>Signs it knows</h2>
-      <div class="cards" id="cardList"></div>
-    </div>
-  </div>
-
-  <footer>
-    Runs entirely in your browser — video never leaves your device. Works best in good light, one hand, palm facing the camera.
-  </footer>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
-<script src="script.js"></script>
-</body>
+    <script
+      src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"
+      crossorigin="anonymous"
+    ></script>
+    <script src="script.js"></script>
+  </body>
 </html>

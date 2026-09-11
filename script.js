@@ -10,11 +10,12 @@
   const muteBtn = document.getElementById("muteBtn");
   const nameInput = document.getElementById("nameInput");
   const cardList = document.getElementById("cardList");
+  const triggerAudio = document.getElementById("triggerAudio");
 
   let speakingEnabled = true;
+  let specialTriggered = false;
+  const SPECIAL_TRIGGER_TEXT = "miku miku " + "b".repeat(120);
 
-  // ---- Gesture definitions -------------------------------------------
-  // Each rule checks index/middle/ring/pinky/thumb "extended" booleans.
   const GESTURES = [
     {
       key: "hello",
@@ -53,7 +54,6 @@
     },
   ];
 
-  // Build reference cards
   GESTURES.forEach((g) => {
     const card = document.createElement("div");
     card.className = "card";
@@ -66,10 +66,12 @@
       </div>`;
     cardList.appendChild(card);
   });
+
   nameInput.addEventListener("input", () => {
     const el = document.getElementById("phrase-point");
-    if (el)
+    if (el) {
       el.textContent = `${GESTURES.find((g) => g.key === "point").phrase()}`;
+    }
   });
 
   muteBtn.addEventListener("click", () => {
@@ -78,16 +80,35 @@
       ? "🔊 Speaking on"
       : "🔇 Speaking off";
     muteBtn.classList.toggle("active", speakingEnabled);
-    if (!speakingEnabled && window.speechSynthesis)
+    if (!speakingEnabled && window.speechSynthesis) {
       window.speechSynthesis.cancel();
+    }
   });
 
   const speak = (text) => {
     if (!speakingEnabled || !("speechSynthesis" in window)) return;
     window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.rate = 0.98;
-    window.speechSynthesis.speak(u);
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 0.98;
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const playSpecialSound = () => {
+    if (triggerAudio) {
+      try {
+        triggerAudio.currentTime = 0;
+        const played = triggerAudio.play();
+        if (played && typeof played.catch === "function") {
+          played.catch(() => {
+            speak(SPECIAL_TRIGGER_TEXT);
+          });
+        }
+        return;
+      } catch (err) {
+        // fall through to speech if audio is blocked
+      }
+    }
+    speak(SPECIAL_TRIGGER_TEXT);
   };
 
   const setStatus = (text, mode) => {
@@ -97,17 +118,15 @@
 
   const highlightCard = (key) => {
     GESTURES.forEach((g) => {
-      document
-        .getElementById("card-" + g.key)
-        .classList.toggle("hot", g.key === key);
+      const card = document.getElementById("card-" + g.key);
+      if (card) card.classList.toggle("hot", g.key === key);
     });
   };
 
-  // ---- Landmark helpers -------------------------------------------
   const dist = (a, b) => {
-    const dx = a.x - b.x,
-      dy = a.y - b.y,
-      dz = (a.z || 0) - (b.z || 0);
+    const dx = a.x - b.x;
+    const dy = a.y - b.y;
+    const dz = (a.z || 0) - (b.z || 0);
     return Math.sqrt(dx * dx + dy * dy + dz * dz);
   };
 
@@ -136,7 +155,52 @@
     return null;
   };
 
-  // ---- Stability / speaking logic ----------------------------------
+  const getHandCenter = (lm) => {
+    const xs = lm.map((point) => point.x);
+    const ys = lm.map((point) => point.y);
+    return {
+      x: xs.reduce((sum, value) => sum + value, 0) / xs.length,
+      y: ys.reduce((sum, value) => sum + value, 0) / ys.length,
+    };
+  };
+
+  const detectTwoHandPeaceMiku = (handLandmarks) => {
+    if (!handLandmarks || handLandmarks.length < 2) return false;
+
+    const peaceHands = handLandmarks
+      .map((lm) => ({
+        center: getHandCenter(lm),
+        gesture: classify(lm),
+      }))
+      .filter((item) => item.gesture && item.gesture.key === "hi");
+
+    if (peaceHands.length < 2) return false;
+
+    const width = canvas.width || video.videoWidth || 640;
+    const height = canvas.height || video.videoHeight || 480;
+
+    const leftEye = { x: width * 0.32, y: height * 0.28 };
+    const rightEye = { x: width * 0.68, y: height * 0.28 };
+
+    const leftHand = peaceHands
+      .filter((hand) => hand.center.x < 0.5)
+      .sort((a, b) => a.center.x - b.center.x)[0];
+    const rightHand = peaceHands
+      .filter((hand) => hand.center.x >= 0.5)
+      .sort((a, b) => b.center.x - a.center.x)[0];
+
+    if (!leftHand || !rightHand) return false;
+
+    const leftNearEye =
+      Math.abs(leftHand.center.x * width - leftEye.x) < width * 0.18 &&
+      Math.abs(leftHand.center.y * height - leftEye.y) < height * 0.2;
+    const rightNearEye =
+      Math.abs(rightHand.center.x * width - rightEye.x) < width * 0.18 &&
+      Math.abs(rightHand.center.y * height - rightEye.y) < height * 0.2;
+
+    return leftNearEye && rightNearEye;
+  };
+
   const STABLE_FRAMES = 7;
   let candidateKey = null;
   let candidateCount = 0;
@@ -153,7 +217,6 @@
     }
 
     if (key === null) {
-      // hand absent or shape not recognized; allow re-triggering later
       if (candidateCount > STABLE_FRAMES) lastSpokenKey = null;
       detectedWord.textContent = "Show a sign to begin";
       detectedWord.className = "detected-word idle";
@@ -173,13 +236,13 @@
     }
   };
 
-  // ---- MediaPipe Hands setup ----------------------------------------
   const hands = new Hands({
     locateFile: (file) =>
       `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`,
   });
+
   hands.setOptions({
-    maxNumHands: 1,
+    maxNumHands: 2,
     modelComplexity: 1,
     minDetectionConfidence: 0.7,
     minTrackingConfidence: 0.6,
@@ -190,31 +253,51 @@
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
     }
+
     ctx.save();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     let matched = null;
-    if (results.multiHandLandmarks && results.multiHandLandmarks.length) {
-      const lm = results.multiHandLandmarks[0];
-      if (window.drawConnectors && window.HAND_CONNECTIONS) {
-        drawConnectors(ctx, lm, HAND_CONNECTIONS, {
-          color: "#4fd1c5",
-          lineWidth: 3,
-        });
-      }
-      if (window.drawLandmarks) {
-        drawLandmarks(ctx, lm, { color: "#e8a33d", lineWidth: 1, radius: 3 });
-      }
-      matched = classify(lm);
-      setStatus("Hand detected — reading the shape.", "live");
+    const handLandmarks = results.multiHandLandmarks || [];
+
+    if (handLandmarks.length) {
+      handLandmarks.forEach((lm) => {
+        if (window.drawConnectors && window.HAND_CONNECTIONS) {
+          drawConnectors(ctx, lm, HAND_CONNECTIONS, {
+            color: "#4fd1c5",
+            lineWidth: 3,
+          });
+        }
+        if (window.drawLandmarks) {
+          drawLandmarks(ctx, lm, { color: "#e8a33d", lineWidth: 1, radius: 3 });
+        }
+      });
+      matched = classify(handLandmarks[0]);
+      setStatus("Hands detected — reading the shape.", "live");
     } else {
       setStatus("Camera live — show a hand.", "warn");
     }
+
+    const twoHandMiku = detectTwoHandPeaceMiku(handLandmarks);
+    if (twoHandMiku) {
+      detectedWord.textContent = "Miku miku beeeee!";
+      detectedWord.className = "detected-word active";
+      highlightCard("hi");
+      setStatus("Two-hand peace near both eyes!", "live");
+
+      if (!specialTriggered) {
+        specialTriggered = true;
+        playSpecialSound();
+      }
+      ctx.restore();
+      return;
+    }
+
+    specialTriggered = false;
     ctx.restore();
     onGestureFrame(matched);
   });
 
-  // ---- Camera setup ----------------------------------------------
   let sending = false;
   const frameLoop = async () => {
     if (video.readyState >= 2 && !sending) {
@@ -222,7 +305,7 @@
       try {
         await hands.send({ image: video });
       } catch (e) {
-        /* ignore transient frame errors */
+        // ignore transient frame errors
       }
       sending = false;
     }
@@ -242,6 +325,7 @@
       setStatus("Camera not supported in this browser.", "warn");
       return;
     }
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { width: 640, height: 480, facingMode: "user" },
