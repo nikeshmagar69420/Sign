@@ -1,12 +1,12 @@
 :root {
-  --bg: #1c1c1c;
-  --panel: #262626;
-  --panel-2: #2f2f2f;
-  --border: #4a4a4a;
-  --amber: #dba94f;
-  --teal: #7fcfc4;
-  --text: #f5f0e8;
-  --muted: #b3aea6;
+  --bg: rgba(0, 0, 0, 0.05);
+  --panel: rgba(255, 255, 255, 0.08);
+  --panel-2: rgba(255, 255, 255, 0.06);
+  --border: rgba(255, 255, 255, 0.16);
+  --amber: #f2c76f;
+  --teal: #8fe3d8;
+  --text: #ffffff;
+  --muted: rgba(255, 255, 255, 0.72);
 }
 * {
   box-sizing: border-box;
@@ -24,25 +24,24 @@ body {
   min-height: 100vh;
 }
 .app-shell {
-  display: grid;
-  grid-template-columns: minmax(0, 1.75fr) minmax(220px, 290px);
-  gap: 16px;
+  display: block;
   min-height: 100vh;
-  padding: 16px;
+  padding: 0;
 }
 .main-stage {
-  background: var(--panel);
-  border: 2px solid var(--border);
-  border-radius: 10px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
+  display: block;
+  height: 100vh;
+  width: 100vw;
 }
 .cam-box {
   position: relative;
-  flex: 1;
-  min-height: 360px;
-  background: #111;
+  width: 100vw;
+  height: 100vh;
+  background: transparent;
   overflow: hidden;
 }
 .cam-box video,
@@ -55,7 +54,11 @@ body {
   transform: scaleX(-1);
 }
 .cam-box video {
-  opacity: 0.96;
+  opacity: 1;
+}
+.cam-box canvas {
+  opacity: 0;
+  pointer-events: none;
 }
 .cam-placeholder {
   position: absolute;
@@ -73,115 +76,13 @@ body {
 .cam-placeholder .big {
   font-size: 42px;
 }
-.status-bar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
-  border-top: 2px solid var(--border);
-  font-size: 12px;
-  color: var(--muted);
-  background: rgba(0, 0, 0, 0.12);
-}
-.dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--muted);
-  flex: none;
-}
-.dot.live {
-  background: var(--teal);
-}
-.dot.warn {
-  background: var(--amber);
-}
-.detected-panel {
-  padding: 12px 16px 16px;
-  background: rgba(255, 255, 255, 0.02);
-  border-top: 2px solid var(--border);
-}
-.detected-word {
-  font-size: 24px;
-  font-weight: 700;
-  min-height: 28px;
-}
-.detected-word.idle {
-  color: var(--muted);
-  font-size: 16px;
-}
-.detected-word.active {
-  color: var(--amber);
-}
-.side-panel {
-  background: var(--panel);
-  border: 2px solid var(--border);
-  border-radius: 10px;
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.name-field {
-  background: var(--panel-2);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 10px 12px;
-}
-.name-field label {
-  display: block;
-  font-size: 11px;
-  color: var(--muted);
-  margin-bottom: 8px;
-}
-.name-field input {
-  width: 100%;
-  background: #181818;
-  border: 1px solid var(--border);
-  border-radius: 5px;
-  color: var(--text);
-  font-family: inherit;
-  font-size: 14px;
-  padding: 8px 10px;
-}
-.name-field input:focus {
-  outline: 2px solid var(--teal);
-}
-.cards {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  overflow: auto;
-}
+.status-bar,
+.detected-panel,
+.side-panel,
+.name-field,
+.cards,
 .card {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: var(--panel-2);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 8px 10px;
-}
-.card.hot {
-  border-color: var(--amber);
-}
-.card .emoji {
-  font-size: 24px;
-  width: 28px;
-  text-align: center;
-  flex: none;
-}
-.card .info {
-  min-width: 0;
-}
-.card .name {
-  font-weight: 700;
-  font-size: 12px;
-}
-.card .phrase {
-  font-size: 11px;
-  color: var(--muted);
-  overflow-wrap: anywhere;
+  display: none !important;
 }
 @media (max-width: 760px) {
   .app-shell {
