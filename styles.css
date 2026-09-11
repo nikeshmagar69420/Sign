@@ -61,7 +61,7 @@ body {
   opacity: 1;
 }
 .cam-box canvas {
-  opacity: 0;
+  opacity: 0.9;
   pointer-events: none;
 }
 .cam-placeholder {
