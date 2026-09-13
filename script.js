@@ -115,7 +115,8 @@
     }
   };
 
-  const playGreetingSound = () => {
+  const playGreetingSound = (detectedHandCount) => {
+    if (detectedHandCount < 2) return;
     playAudioFromFile("muslim.mp3");
     if (!triggerAudio || triggerAudio.paused) {
       speak("Assalamu alaikum");
@@ -404,7 +405,7 @@
 
       if (!greetingTriggered) {
         greetingTriggered = true;
-        playGreetingSound();
+        playGreetingSound(handLandmarks.length);
       }
       ctx.restore();
       return;
