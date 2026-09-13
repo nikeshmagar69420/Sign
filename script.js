@@ -298,13 +298,6 @@
       return;
     }
 
-    if (key === "hello") {
-      detectedWord.textContent = "Assalamu alaikum";
-      detectedWord.className = "detected-word active";
-      highlightCard(key);
-      return;
-    }
-
     detectedWord.textContent = matchedGesture.name;
     detectedWord.className = "detected-word active";
     highlightCard(key);
