@@ -26,6 +26,7 @@
   let greetingHoldFrames = 0;
   const SPECIAL_TRIGGER_TEXT = "miku miku " + "b".repeat(120);
 
+  // Step 1: Set up audio and sound effects.
   const playAudioFromFile = (fileName) => {
     if (!triggerAudio) return;
 
@@ -42,6 +43,7 @@
     }
   };
 
+  // Step 2: Build the list of gestures that the app knows.
   const GESTURES = [
     {
       key: "hello",
@@ -208,6 +210,7 @@
     );
   };
 
+  // Step 3: Check the hand shape and decide which gesture it matches.
   const classify = (lm) => {
     const f = getFingerState(lm);
 
@@ -310,6 +313,7 @@
     }
   };
 
+  // Step 4: Use MediaPipe to process every video frame.
   const hands = new Hands({
     locateFile: (file) =>
       `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`,
@@ -419,14 +423,13 @@
       sending = true;
       try {
         await hands.send({ image: video });
-      } catch (e) {
-        // ignore transient frame errors
-      }
+      } catch (e) {}
       sending = false;
     }
     requestAnimationFrame(frameLoop);
   };
 
+  // Step 5: Start the webcam and begin the detection loop.
   const startCamera = async () => {
     if (!window.isSecureContext) {
       placeholderText.textContent =
