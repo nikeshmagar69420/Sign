@@ -305,7 +305,17 @@
   const detectSpiderMan = (recognizedHands) => {
     return recognizedHands.some(({ lm }) => {
       const fingers = getFingerState(lm);
-      return fingers.index && fingers.pinky && !fingers.middle && !fingers.ring;
+      const fingersPointDown =
+        lm[8].y > lm[0].y + 0.05 && lm[20].y > lm[0].y + 0.05;
+
+      return (
+        fingers.thumb &&
+        fingers.index &&
+        fingers.pinky &&
+        !fingers.middle &&
+        !fingers.ring &&
+        fingersPointDown
+      );
     });
   };
 
