@@ -22,6 +22,8 @@
   let speakingEnabled = true;
   let specialTriggered = false;
   let specialHoldFrames = 0;
+  let spiderManTriggered = false;
+  let spiderManHoldFrames = 0;
   let greetingTriggered = false;
   let greetingHoldFrames = 0;
   const SPECIAL_TRIGGER_TEXT = "miku miku " + "b".repeat(120);
@@ -123,6 +125,10 @@
     if (!triggerAudio || triggerAudio.paused) {
       speak("Assalamu alaikum");
     }
+  };
+
+  const playSpiderManSound = () => {
+    playAudioFromFile("spidi.mp3");
   };
 
   const setStatus = (text, mode) => {
@@ -278,6 +284,13 @@
     return spread > 0.12 && verticalAlignment;
   };
 
+  const detectSpiderMan = (recognizedHands) => {
+    return recognizedHands.some(({ lm }) => {
+      const fingers = getFingerState(lm);
+      return fingers.index && fingers.pinky && !fingers.middle && !fingers.ring;
+    });
+  };
+
   const STABLE_FRAMES = 4;
   let candidateKey = null;
   let candidateCount = 0;
@@ -384,6 +397,32 @@
       }
       ctx.restore();
       return;
+    }
+
+    const spiderMan = detectSpiderMan(recognizedHands);
+    if (spiderMan) {
+      spiderManHoldFrames += 1;
+    } else {
+      spiderManHoldFrames = 0;
+    }
+
+    if (spiderMan && spiderManHoldFrames >= 3) {
+      detectedWord.textContent = "Spider-Man";
+      detectedWord.className = "detected-word active";
+      highlightCard("point");
+      setStatus("Spider-Man sign detected.", "live");
+
+      if (!spiderManTriggered) {
+        spiderManTriggered = true;
+        playSpiderManSound();
+      }
+      ctx.restore();
+      return;
+    }
+
+    if (!spiderMan) {
+      spiderManTriggered = false;
+      spiderManHoldFrames = 0;
     }
 
     const twoHandOpenPalms = detectTwoHandOpenPalms(recognizedHands);
