@@ -36,14 +36,32 @@
     triggerAudio.muted = false;
     triggerAudio.volume = 1;
     triggerAudio.currentTime = 0;
+    triggerAudio.load();
 
     const playPromise = triggerAudio.play();
     if (playPromise && typeof playPromise.catch === "function") {
       playPromise.catch(() => {
-        speak(SPECIAL_TRIGGER_TEXT);
+        speak(fileName === "spidi.mp3" ? "Spider-Man" : SPECIAL_TRIGGER_TEXT);
       });
     }
   };
+
+  document.addEventListener(
+    "pointerdown",
+    () => {
+      if (!triggerAudio) return;
+      triggerAudio.muted = true;
+      triggerAudio
+        .play()
+        .then(() => {
+          triggerAudio.pause();
+          triggerAudio.currentTime = 0;
+          triggerAudio.muted = false;
+        })
+        .catch(() => {});
+    },
+    { once: true },
+  );
 
   // Step 2: Build the list of gestures that the app knows.
   const GESTURES = [
