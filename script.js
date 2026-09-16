@@ -306,7 +306,7 @@
     return recognizedHands.some(({ lm }) => {
       const fingers = getFingerState(lm);
       const fingersPointDown =
-        lm[8].y > lm[0].y + 0.05 && lm[20].y > lm[0].y + 0.05;
+        lm[8].y > lm[0].y + 0.01 && lm[20].y > lm[0].y + 0.01;
 
       return (
         fingers.thumb &&
