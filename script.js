@@ -26,6 +26,8 @@
   let spiderManHoldFrames = 0;
   let greetingTriggered = false;
   let greetingHoldFrames = 0;
+  let twoFistsTriggered = false;
+  let twoFistsHoldFrames = 0;
   const SPECIAL_TRIGGER_TEXT = "miku miku " + "b".repeat(120);
 
   // Step 1: Set up audio and sound effects.
@@ -149,6 +151,10 @@
     playAudioFromFile("spidi.mp3");
   };
 
+  const playTwoFistsSound = () => {
+    playAudioFromFile("cm.mp3");
+  };
+
   const setStatus = (text, mode) => {
     statusText.textContent = text;
     statusDot.className = "dot" + (mode ? " " + mode : "");
@@ -187,7 +193,7 @@
       const [tipIdx, pipIdx] = pairs[finger];
       const tipDist = dist(lm[tipIdx], palm);
       const pipDist = dist(lm[pipIdx], palm);
-      state[finger] = tipDist > pipDist * 1.12;
+      state[finger] = tipDist > pipDist * 1.05;
     }
     return state;
   };
@@ -302,19 +308,23 @@
     return spread > 0.12 && verticalAlignment;
   };
 
+  const detectTwoFists = (recognizedHands) => {
+    if (!recognizedHands || recognizedHands.length !== 2) return false;
+
+    return recognizedHands.every(({ gesture }) => {
+      return gesture && gesture.key === "fist";
+    });
+  };
+
   const detectSpiderMan = (recognizedHands) => {
     return recognizedHands.some(({ lm }) => {
       const fingers = getFingerState(lm);
-      const fingersPointDown =
-        lm[8].y > lm[0].y + 0.01 && lm[20].y > lm[0].y + 0.01;
-
       return (
         fingers.thumb &&
         fingers.index &&
         fingers.pinky &&
         !fingers.middle &&
-        !fingers.ring &&
-        fingersPointDown
+        !fingers.ring
       );
     });
   };
@@ -470,6 +480,28 @@
       if (!greetingTriggered) {
         greetingTriggered = true;
         playGreetingSound(handLandmarks.length);
+      }
+      ctx.restore();
+      return;
+    }
+
+    const twoFists = detectTwoFists(recognizedHands);
+    if (twoFists) {
+      twoFistsHoldFrames += 1;
+    } else {
+      twoFistsHoldFrames = 0;
+      twoFistsTriggered = false;
+    }
+
+    if (twoFists && twoFistsHoldFrames >= 3) {
+      detectedWord.textContent = "Two fists";
+      detectedWord.className = "detected-word active";
+      highlightCard("fist");
+      setStatus("Two fists detected.", "live");
+
+      if (!twoFistsTriggered) {
+        twoFistsTriggered = true;
+        playTwoFistsSound();
       }
       ctx.restore();
       return;
