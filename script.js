@@ -311,16 +311,16 @@
   const detectTwoFists = (recognizedHands) => {
     if (!recognizedHands || recognizedHands.length !== 2) return false;
 
-    return recognizedHands.every(({ lm, gesture }) => {
-      if (!gesture || gesture.key !== "fist") return false;
-
+    return recognizedHands.every(({ lm }) => {
+      const fingers = getFingerState(lm);
       const palm = getHandCenter(lm);
-      const fingertips = [4, 8, 12, 16, 20];
-      const compactFingers = fingertips.every((index) => {
-        return dist(lm[index], palm) < 0.22;
+      const curledFingers =
+        !fingers.index && !fingers.middle && !fingers.ring && !fingers.pinky;
+      const fingertipsNearPalm = [8, 12, 16, 20].every((index) => {
+        return dist(lm[index], palm) < 0.2;
       });
 
-      return compactFingers;
+      return curledFingers && fingertipsNearPalm;
     });
   };
 
