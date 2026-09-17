@@ -21,8 +21,6 @@ This project uses the camera to detect hand signs and then responds with voice, 
 ## Special actions
 
 - Two peace signs together = Miku sound and special reaction
-- Two open palms together = greeting sound and Assalamu alaikum
-
 
 ## Notes
 

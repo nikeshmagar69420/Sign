@@ -24,8 +24,6 @@
   let specialHoldFrames = 0;
   let spiderManTriggered = false;
   let spiderManHoldFrames = 0;
-  let greetingTriggered = false;
-  let greetingHoldFrames = 0;
   let twoFistsTriggered = false;
   let twoFistsHoldFrames = 0;
   const SPECIAL_TRIGGER_TEXT = "miku miku " + "b".repeat(120);
@@ -136,14 +134,6 @@
     playAudioFromFile("miku.mp3");
     if (!triggerAudio || triggerAudio.paused) {
       speak(SPECIAL_TRIGGER_TEXT);
-    }
-  };
-
-  const playGreetingSound = (detectedHandCount) => {
-    if (detectedHandCount < 2) return;
-    playAudioFromFile("muslim.mp3");
-    if (!triggerAudio || triggerAudio.paused) {
-      speak("Assalamu alaikum");
     }
   };
 
@@ -290,28 +280,10 @@
     return spread > 0.22 && bothVisible && verticalAlignment;
   };
 
-  const detectTwoHandOpenPalms = (recognizedHands) => {
-    if (!recognizedHands || recognizedHands.length !== 2) return false;
-
-    const openHands = recognizedHands.filter(({ gesture }) => {
-      return gesture && gesture.key === "hello";
-    });
-
-    if (openHands.length !== 2) return false;
-
-    const centers = openHands
-      .map(({ lm }) => getHandCenter(lm))
-      .sort((a, b) => a.x - b.x);
-    const spread = Math.abs(centers[0].x - centers[1].x);
-    const verticalAlignment = Math.abs(centers[0].y - centers[1].y) < 0.25;
-
-    return spread > 0.12 && verticalAlignment;
-  };
-
   const detectTwoFists = (recognizedHands) => {
-    if (!recognizedHands || recognizedHands.length !== 2) return false;
+    if (!recognizedHands || recognizedHands.length === 0) return false;
 
-    return recognizedHands.every(({ lm }) => {
+    return recognizedHands.some(({ lm }) => {
       const fingers = getFingerState(lm);
       const palm = getHandCenter(lm);
       const curledFingers =
@@ -480,36 +452,14 @@
     }
 
     if (twoFists && twoFistsHoldFrames >= 3) {
-      detectedWord.textContent = "Two fists";
+      detectedWord.textContent = "Fist";
       detectedWord.className = "detected-word active";
       highlightCard("fist");
-      setStatus("Two forward-facing fists detected.", "live");
+      setStatus("Fist detected.", "live");
 
       if (!twoFistsTriggered) {
         twoFistsTriggered = true;
         playTwoFistsSound();
-      }
-      ctx.restore();
-      return;
-    }
-
-    const twoHandOpenPalms = detectTwoHandOpenPalms(recognizedHands);
-    if (twoHandOpenPalms) {
-      greetingHoldFrames += 1;
-    } else {
-      greetingHoldFrames = 0;
-      greetingTriggered = false;
-    }
-
-    if (twoHandOpenPalms && greetingHoldFrames >= 3) {
-      detectedWord.textContent = "Assalamu alaikum";
-      detectedWord.className = "detected-word active";
-      highlightCard("hello");
-      setStatus("Two open palms detected.", "live");
-
-      if (!greetingTriggered) {
-        greetingTriggered = true;
-        playGreetingSound(handLandmarks.length);
       }
       ctx.restore();
       return;
