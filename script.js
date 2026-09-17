@@ -281,9 +281,9 @@
   };
 
   const detectTwoFists = (recognizedHands) => {
-    if (!recognizedHands || recognizedHands.length === 0) return false;
+    if (!recognizedHands || recognizedHands.length !== 2) return false;
 
-    return recognizedHands.some(({ lm }) => {
+    return recognizedHands.every(({ lm }) => {
       const fingers = getFingerState(lm);
       const palm = getHandCenter(lm);
       const curledFingers =
