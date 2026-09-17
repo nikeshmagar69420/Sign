@@ -145,6 +145,12 @@
     playAudioFromFile("cm.mp3");
   };
 
+  const stopTwoFistsSound = () => {
+    if (!triggerAudio || !triggerAudio.src.endsWith("/cm.mp3")) return;
+    triggerAudio.pause();
+    triggerAudio.currentTime = 0;
+  };
+
   const setStatus = (text, mode) => {
     statusText.textContent = text;
     statusDot.className = "dot" + (mode ? " " + mode : "");
@@ -287,6 +293,8 @@
       if (!gesture || gesture.key !== "fist") return false;
 
       const fingers = getFingerState(lm);
+      if (fingers.thumb) return false;
+
       const palm = getHandCenter(lm);
       const curledFingers =
         !fingers.index && !fingers.middle && !fingers.ring && !fingers.pinky;
@@ -451,6 +459,7 @@
     } else {
       twoFistsHoldFrames = 0;
       twoFistsTriggered = false;
+      stopTwoFistsSound();
     }
 
     if (twoFists && twoFistsHoldFrames >= 3) {
