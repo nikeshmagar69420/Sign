@@ -296,13 +296,15 @@
       if (fingers.thumb) return false;
 
       const palm = getHandCenter(lm);
+      const palmSize = dist(lm[0], lm[9]);
       const curledFingers =
         !fingers.index && !fingers.middle && !fingers.ring && !fingers.pinky;
       const fingertipsNearPalm = [8, 12, 16, 20].every((index) => {
-        return dist(lm[index], palm) < 0.2;
+        return dist(lm[index], palm) < palmSize * 1.5;
       });
+      const thumbNearPalm = dist(lm[4], palm) < palmSize * 1.5;
 
-      return curledFingers && fingertipsNearPalm;
+      return curledFingers && fingertipsNearPalm && thumbNearPalm;
     });
   };
 
