@@ -311,8 +311,16 @@
   const detectTwoFists = (recognizedHands) => {
     if (!recognizedHands || recognizedHands.length !== 2) return false;
 
-    return recognizedHands.every(({ gesture }) => {
-      return gesture && gesture.key === "fist";
+    return recognizedHands.every(({ lm, gesture }) => {
+      if (!gesture || gesture.key !== "fist") return false;
+
+      const palm = getHandCenter(lm);
+      const fingertips = [4, 8, 12, 16, 20];
+      const compactFingers = fingertips.every((index) => {
+        return dist(lm[index], palm) < 0.22;
+      });
+
+      return compactFingers;
     });
   };
 
@@ -463,6 +471,28 @@
       spiderManHoldFrames = 0;
     }
 
+    const twoFists = detectTwoFists(recognizedHands);
+    if (twoFists) {
+      twoFistsHoldFrames += 1;
+    } else {
+      twoFistsHoldFrames = 0;
+      twoFistsTriggered = false;
+    }
+
+    if (twoFists && twoFistsHoldFrames >= 3) {
+      detectedWord.textContent = "Two fists";
+      detectedWord.className = "detected-word active";
+      highlightCard("fist");
+      setStatus("Two forward-facing fists detected.", "live");
+
+      if (!twoFistsTriggered) {
+        twoFistsTriggered = true;
+        playTwoFistsSound();
+      }
+      ctx.restore();
+      return;
+    }
+
     const twoHandOpenPalms = detectTwoHandOpenPalms(recognizedHands);
     if (twoHandOpenPalms) {
       greetingHoldFrames += 1;
@@ -480,28 +510,6 @@
       if (!greetingTriggered) {
         greetingTriggered = true;
         playGreetingSound(handLandmarks.length);
-      }
-      ctx.restore();
-      return;
-    }
-
-    const twoFists = detectTwoFists(recognizedHands);
-    if (twoFists) {
-      twoFistsHoldFrames += 1;
-    } else {
-      twoFistsHoldFrames = 0;
-      twoFistsTriggered = false;
-    }
-
-    if (twoFists && twoFistsHoldFrames >= 3) {
-      detectedWord.textContent = "Two fists";
-      detectedWord.className = "detected-word active";
-      highlightCard("fist");
-      setStatus("Two fists detected.", "live");
-
-      if (!twoFistsTriggered) {
-        twoFistsTriggered = true;
-        playTwoFistsSound();
       }
       ctx.restore();
       return;
